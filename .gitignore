@@ -1,0 +1,5 @@
+main
+.idea
+pkg
+src
+config/*.conf
