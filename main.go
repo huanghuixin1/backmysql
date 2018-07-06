@@ -63,12 +63,18 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 		backShell := fmt.Sprintf("mysqldump --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
 			host, port, user, pwd, db, savedir, db+"_"+time.Now().UTC().Format("2006-01-02_15:04:05"))
 		fmt.Println("备份命令", backShell)
-		exec.Command("bash", "-c", "mkdir -p "+savedir)
-		retFrp := exec.Command("bash", "-c", backShell)
-		retFrpBytes, errFrp := retFrp.Output()
+		retMkdir := exec.Command("bash", "-c", "mkdir -p "+savedir)
+		//retMkdir.Wait()
+		retMkdirBytes, err := retMkdir.Output()
+		if (err != nil) {
+			fmt.Println("创建目录 出现错误", string(retMkdirBytes), err.Error())
+		}
 
-		if (errFrp != nil) {
-			fmt.Println("出现错误", string(retFrpBytes), errFrp.Error())
+		retFrp := exec.Command("bash", "-c", backShell)
+		retFrpBytes, err := retFrp.Output()
+
+		if (err != nil) {
+			fmt.Println("出现错误", string(retFrpBytes), err.Error())
 		}
 	}
 
