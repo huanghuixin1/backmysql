@@ -1,0 +1,7 @@
+backtime=2 # # 每隔多少分钟进行一次备份  如果是一个float类型 则固定对应时间进行操作  如果是HH:mm类型 则每天该时间进行操作
+port=3306 #端口
+host=127.0.0.1 #服务器地址
+dbs=ss,hhx #数据库
+user=root #用户
+pwd=pwd #密码
+savedir=./ #保存路径
