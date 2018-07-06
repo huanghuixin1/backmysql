@@ -41,7 +41,7 @@ func startBackInterval(config *config.Config) {
 		housr, _ := strconv.Atoi(hourMinuts[0])
 		minuts, _ := strconv.Atoi(hourMinuts[1])
 		for true {
-			now := time.Now()
+			now := time.Now().UTC()
 			if (now.Hour() == housr && now.Minute() == minuts) {
 				invokeBack(user, pwd, host, port, savedir, dbs)
 			}
@@ -59,7 +59,8 @@ func startBackInterval(config *config.Config) {
 func invokeBack(user string, pwd string, host string, port string, savedir string, dbs []string) {
 	for _, db := range dbs {
 		//now := time.Now();
-		backShell := fmt.Sprintf("mysqldump --host %s --port %s -u%s -p%s --databases %s > %s%s.sql", host, port, user, pwd, db, savedir, db+"_"+time.Now().Format("2006-01-02_15:04:05"))
+		backShell := fmt.Sprintf("mysqldump --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
+			host, port, user, pwd, db, savedir, db+"_"+time.Now().UTC().Format("2006-01-02_15:04:05"))
 		fmt.Println("备份命令", backShell)
 		retFrp := exec.Command("bash", "-c", backShell)
 		retFrpBytes, errFrp := retFrp.Output()
