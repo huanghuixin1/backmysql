@@ -13,7 +13,6 @@ import (
 func main() {
 	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "服务开启中...")
 	// 获取程序的配置
-	//c, _ := config.ReadDefault("./config.conf")
 	files, _ := ioutil.ReadDir("./config")
 	for _, file := range files {
 		if (!strings.HasSuffix(file.Name(), ".conf")) {
@@ -59,12 +58,10 @@ func startBackInterval(config *config.Config) {
 
 func invokeBack(user string, pwd string, host string, port string, savedir string, dbs []string) {
 	for _, db := range dbs {
-		//now := time.Now();
 		backShell := fmt.Sprintf("mysqldump --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
 			host, port, user, pwd, db, savedir, db+"_"+time.Now().UTC().Format("2006-01-02_15:04:05"))
 		fmt.Println("备份命令", backShell)
 		retMkdir := exec.Command("bash", "-c", "mkdir -p "+savedir)
-		//retMkdir.Wait()
 		retMkdirBytes, err := retMkdir.Output()
 		if (err != nil) {
 			fmt.Println("创建目录 出现错误", string(retMkdirBytes), err.Error())
