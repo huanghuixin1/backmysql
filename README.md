@@ -8,5 +8,5 @@
 ### 启动程序
 ```
 $ chmod +x ./backmysql
-$ nohup ./backmysql > /var/log/backmysql.log 2>&1 &
+$ nohup /usr/local/backmysql/./backmysql > /var/log/backmysql.log 2>&1 &
 ```
