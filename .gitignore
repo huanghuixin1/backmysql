@@ -4,3 +4,4 @@ pkg
 src
 config/*.conf
 backmysql
+test.go
