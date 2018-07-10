@@ -29,6 +29,7 @@ func main() {
 	for i := 0; i < len(files); i++ {
 		<-ch
 	}
+	fmt.Println("进程结束")
 }
 
 func startBackInterval(config *config.Config, ch chan int) {
