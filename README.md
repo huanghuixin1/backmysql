@@ -10,3 +10,8 @@
 $ chmod +x ./backmysql
 $ nohup /usr/local/backmysql/./backmysql > /var/log/backmysql.log 2>&1 &
 ```
+
+### 编译
+- `set GOOS=linux/windows`
+- `set GOARCH=amd64/arm`
+- `go build -o backmysql main.go`

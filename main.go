@@ -10,12 +10,15 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 )
 
 func main() {
 	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "服务开启中...")
 	// 获取程序的配置
-	files, _ := ioutil.ReadDir("./config")
+	currentFilePath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	files, _ := ioutil.ReadDir(currentFilePath + "/config")
+
 	ch := make(chan int, len(files))
 	for _, file := range files {
 		if (!strings.HasSuffix(file.Name(), ".conf")) {

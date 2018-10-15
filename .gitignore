@@ -4,4 +4,6 @@ pkg
 src
 config/*.conf
 backmysql
+backmysql.exe
 test.go
+main.exe
