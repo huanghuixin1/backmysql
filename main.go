@@ -18,14 +18,14 @@ func main() {
 	// 获取程序的配置
 	currentFilePath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	files, _ := ioutil.ReadDir(currentFilePath + "/config")
-
+	fmt.Println("运行地址" + currentFilePath + "/config")
 	ch := make(chan int, len(files))
 	for _, file := range files {
 		if (!strings.HasSuffix(file.Name(), ".conf")) {
 			continue
 		}
 
-		configSubProcess, _ := config.ReadDefault("./config/" + file.Name())
+		configSubProcess, _ := config.ReadDefault(currentFilePath + "/config/" + file.Name())
 		go startBackInterval(configSubProcess, ch)
 	}
 
