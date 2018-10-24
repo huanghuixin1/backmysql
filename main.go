@@ -13,10 +13,11 @@ import (
 	"path/filepath"
 )
 
+var currentFilePath string // 程序的运行目录
 func main() {
 	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "服务开启中...")
 	// 获取程序的配置
-	currentFilePath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	currentFilePath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
 	files, _ := ioutil.ReadDir(currentFilePath + "/config")
 	fmt.Println("运行地址" + currentFilePath + "/config")
 	ch := make(chan int, len(files))
@@ -41,6 +42,7 @@ func startBackInterval(config *config.Config, ch chan int) {
 	host, _ := config.String("", "host")
 	port, _ := config.String("", "port")
 	savedir, _ := config.String("", "savedir")
+	savedir = currentFilePath + savedir
 	dbsStr, _ := config.String("", "dbs")
 	maxfiles, _ := config.Int("", "maxfiles")
 	if (maxfiles <= 0) {
