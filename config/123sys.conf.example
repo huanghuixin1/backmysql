@@ -4,5 +4,5 @@ host=127.0.0.1 #服务器地址
 dbs=ss,hhx #数据库
 user=root #用户
 pwd=pwd #密码
-savedir=./ #保存路径
+savedir=/ #保存路径 相对于程序当前的执行路径
 maxfiles=50 # 最大保存的文件数量 默认为50
