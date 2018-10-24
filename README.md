@@ -14,3 +14,7 @@ $ nohup /usr/local/backmysql/./backmysql > /var/log/backmysql.log 2>&1 &
 - `set GOOS=linux/windows`
 - `set GOARCH=amd64/arm`
 - `go build -o backmysql main.go`
+
+
+## 注意
+修改完配置记得`重新启动程序`!!
