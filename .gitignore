@@ -6,4 +6,5 @@ config/*.conf
 backmysql
 backmysql.exe
 test.go
+test.exe
 main.exe
