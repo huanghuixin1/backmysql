@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -86,25 +87,49 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 		}
 	}
 
-	for _, db := range dbs {
-		backShell := fmt.Sprintf("mysqldump --column-statistics=0 --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
-			host, port, user, pwd, db, savedir, db+"_"+time.Now().UTC().Format("2006-01-02_15:04:05"))
-		fmt.Println("备份命令", backShell)
-		retMkdir := exec.Command("bash", "-c", "mkdir -p "+savedir)
-		retMkdirBytes, err := retMkdir.Output()
-		if err != nil {
-			fmt.Println("创建目录 出现错误", string(retMkdirBytes), err.Error())
+	if runtime.GOOS == "windows" {
+		for _, db := range dbs {
+			backShell := fmt.Sprintf("mysqldump --column-statistics=0 --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
+				host, port, user, pwd, db, savedir, db+"_"+time.Now().UTC().Format("2006-01-02_15:04:05"))
+			fmt.Println("备份命令", backShell)
+
+			retMkdir := exec.Command("cmd.exe", "/C", "mkdir", savedir)
+			retMkdirBytes, err := retMkdir.Output()
+			if err != nil {
+				fmt.Println("创建目录 出现错误", string(retMkdirBytes), err.Error())
+			}
+
+			retFrp := exec.Command("cmd.exe", "/C", backShell)
+			retFrpBytes, err := retFrp.Output()
+
+			if err != nil {
+				fmt.Println("出现错误", string(retFrpBytes), err.Error())
+			}
+
+			fmt.Println("数据库 ", db, " 备份完毕")
 		}
+	} else {
+		for _, db := range dbs {
+			backShell := fmt.Sprintf("mysqldump --column-statistics=0 --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
+				host, port, user, pwd, db, savedir, db+"_"+time.Now().UTC().Format("2006-01-02_15:04:05"))
+			fmt.Println("备份命令", backShell)
+			retMkdir := exec.Command("bash", "-c", "mkdir -p "+savedir)
+			retMkdirBytes, err := retMkdir.Output()
+			if err != nil {
+				fmt.Println("创建目录 出现错误", string(retMkdirBytes), err.Error())
+			}
 
-		retFrp := exec.Command("bash", "-c", backShell)
-		retFrpBytes, err := retFrp.Output()
+			retFrp := exec.Command("bash", "-c", backShell)
+			retFrpBytes, err := retFrp.Output()
 
-		if err != nil {
-			fmt.Println("出现错误", string(retFrpBytes), err.Error())
+			if err != nil {
+				fmt.Println("出现错误", string(retFrpBytes), err.Error())
+			}
+
+			fmt.Println("数据库 ", db, " 备份完毕")
 		}
-
-		fmt.Println("数据库 ", db, " 备份完毕")
 	}
+
 }
 
 // 获取创建时间最长的文件
