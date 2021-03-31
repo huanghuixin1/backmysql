@@ -1,16 +1,16 @@
 package main
 
 import (
-	"io/ioutil"
-	"strings"
-	"github.com/robfig/config"
-	"time"
-	"strconv"
-	"os/exec"
 	"fmt"
+	"github.com/robfig/config"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var currentFilePath string // 程序的运行目录
@@ -22,7 +22,7 @@ func main() {
 	fmt.Println("运行地址" + currentFilePath + "/config")
 	ch := make(chan int, len(files))
 	for _, file := range files {
-		if (!strings.HasSuffix(file.Name(), ".conf")) {
+		if !strings.HasSuffix(file.Name(), ".conf") {
 			continue
 		}
 
@@ -45,7 +45,7 @@ func startBackInterval(config *config.Config, ch chan int) {
 	savedir = currentFilePath + savedir
 	dbsStr, _ := config.String("", "dbs")
 	maxfiles, _ := config.Int("", "maxfiles")
-	if (maxfiles <= 0) {
+	if maxfiles <= 0 {
 		maxfiles = 180
 	}
 	dbs := strings.Split(dbsStr, ",")
@@ -61,7 +61,7 @@ func startBackInterval(config *config.Config, ch chan int) {
 		minuts, _ := strconv.Atoi(hourMinuts[1])
 		for true {
 			now := time.Now().UTC()
-			if (now.Hour() == housr && now.Minute() == minuts) {
+			if now.Hour() == housr && now.Minute() == minuts {
 				invokeBack(user, pwd, host, port, savedir, dbs, maxfiles)
 			}
 			time.Sleep(time.Second * time.Duration(40))
@@ -81,25 +81,25 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 	if len(files) >= maxfiles {
 		minCreateTimeFile := getMinModifyTimeFile(savedir)
 		//fmt.Println("debug 需要删除文件", minCreateTimeFile.ModTime())
-		if (minCreateTimeFile != nil) {
+		if minCreateTimeFile != nil {
 			os.Remove(path.Join(savedir, minCreateTimeFile.Name()))
 		}
 	}
 
 	for _, db := range dbs {
-		backShell := fmt.Sprintf("mysqldump --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
+		backShell := fmt.Sprintf("mysqldump --column-statistics=0 --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
 			host, port, user, pwd, db, savedir, db+"_"+time.Now().UTC().Format("2006-01-02_15:04:05"))
 		fmt.Println("备份命令", backShell)
 		retMkdir := exec.Command("bash", "-c", "mkdir -p "+savedir)
 		retMkdirBytes, err := retMkdir.Output()
-		if (err != nil) {
+		if err != nil {
 			fmt.Println("创建目录 出现错误", string(retMkdirBytes), err.Error())
 		}
 
 		retFrp := exec.Command("bash", "-c", backShell)
 		retFrpBytes, err := retFrp.Output()
 
-		if (err != nil) {
+		if err != nil {
 			fmt.Println("出现错误", string(retFrpBytes), err.Error())
 		}
 
@@ -110,16 +110,16 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 // 获取创建时间最长的文件
 func getMinModifyTimeFile(path string) os.FileInfo {
 	files, _ := ioutil.ReadDir(path)
-	if (len(files) <= 0) {
+	if len(files) <= 0 {
 		return nil
 	}
 	var minModifyTimeFile os.FileInfo // 创建时间最小的文件信息
 
 	for i := 0; i < len(files); i++ {
-		if (files[i].IsDir()) {
+		if files[i].IsDir() {
 			continue
 		}
-		if (minModifyTimeFile == nil || minModifyTimeFile.ModTime().UnixNano() > files[i].ModTime().UnixNano()) {
+		if minModifyTimeFile == nil || minModifyTimeFile.ModTime().UnixNano() > files[i].ModTime().UnixNano() {
 			minModifyTimeFile = files[i]
 		}
 	}
