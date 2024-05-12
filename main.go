@@ -15,7 +15,7 @@ import (
 
 var currentFilePath string // 程序的运行目录
 func main() {
-	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "服务开启中...")
+	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 2.0, 服务开启中...")
 	// 获取程序的配置
 	currentFilePath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
 	files, _ := ioutil.ReadDir(currentFilePath + "/config")
@@ -86,8 +86,9 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 		}
 	}
 
+	//  mysqldump --single-transaction --column-statistics=0 --host www.52hhx.com --port 3307 -uroot -proot8114359 --databases vmq > /usr/local/backmysql/blog/vmq_2024-05-12_14:55:41.sql
 	for _, db := range dbs {
-		backShell := fmt.Sprintf("mysqldump --column-statistics=0 --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
+		backShell := fmt.Sprintf("mysqldump --single-transaction --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
 			host, port, user, pwd, db, savedir, db+"_"+time.Now().UTC().Format("2006-01-02_15:04:05"))
 		fmt.Println("备份命令", backShell)
 		retMkdir := exec.Command("bash", "-c", "mkdir -p "+savedir)
