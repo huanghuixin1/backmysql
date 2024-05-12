@@ -15,7 +15,7 @@ import (
 
 var currentFilePath string // 程序的运行目录
 func main() {
-	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 2.0, 服务开启中...")
+	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 2.2, 服务开启中...")
 	// 获取程序的配置
 	currentFilePath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
 	files, _ := ioutil.ReadDir(currentFilePath + "/config")
