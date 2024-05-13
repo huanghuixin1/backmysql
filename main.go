@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/robfig/config"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -11,14 +9,17 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/robfig/config"
 )
 
 var currentFilePath string // 程序的运行目录
 func main() {
-	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 2.2, 服务开启中...")
+	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 2.3, 服务开启中...")
 	// 获取程序的配置
 	currentFilePath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
-	files, _ := ioutil.ReadDir(currentFilePath + "/config")
+	files, _ := os.ReadDir(currentFilePath + "/config")
+
 	fmt.Println("运行地址" + currentFilePath + "/config")
 	ch := make(chan int, len(files))
 	for _, file := range files {
@@ -50,6 +51,7 @@ func startBackInterval(config *config.Config, ch chan int) {
 	}
 	dbs := strings.Split(dbsStr, ",")
 
+	// 备份时间
 	backtime, err := config.Float("", "backtime")
 
 	fmt.Println("数据库正在备份准备中:", host, "。保存路径为:"+savedir, "最大保存数量：", maxfiles)
@@ -77,13 +79,13 @@ func startBackInterval(config *config.Config, ch chan int) {
 
 func invokeBack(user string, pwd string, host string, port string, savedir string, dbs []string, maxfiles int) {
 	// 判断文件数量是否大于要求值
-	files, _ := ioutil.ReadDir(savedir)
-	if len(files) >= maxfiles {
+	files, _ := os.ReadDir(savedir)
+	for len(files) > maxfiles {
 		minCreateTimeFile := getMinModifyTimeFile(savedir)
-		//fmt.Println("debug 需要删除文件", minCreateTimeFile.ModTime())
 		if minCreateTimeFile != nil {
 			os.Remove(path.Join(savedir, minCreateTimeFile.Name()))
 		}
+		files, _ = os.ReadDir(savedir) // 重新获取文件列表
 	}
 
 	//  mysqldump --single-transaction --column-statistics=0 --host www.52hhx.com --port 3307 -uroot -proot8114359 --databases vmq > /usr/local/backmysql/blog/vmq_2024-05-12_14:55:41.sql
@@ -110,18 +112,19 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 
 // 获取创建时间最长的文件
 func getMinModifyTimeFile(path string) os.FileInfo {
-	files, _ := ioutil.ReadDir(path)
+	files, _ := os.ReadDir(path)
 	if len(files) <= 0 {
 		return nil
 	}
 	var minModifyTimeFile os.FileInfo // 创建时间最小的文件信息
 
 	for i := 0; i < len(files); i++ {
-		if files[i].IsDir() {
-			continue
+		curFile, err := files[i].Info()
+		if err != nil {
+			fmt.Println("获取文件信息出错", err.Error())
 		}
-		if minModifyTimeFile == nil || minModifyTimeFile.ModTime().UnixNano() > files[i].ModTime().UnixNano() {
-			minModifyTimeFile = files[i]
+		if minModifyTimeFile == nil || minModifyTimeFile.ModTime().UnixNano() > curFile.ModTime().UnixNano() {
+			minModifyTimeFile = curFile
 		}
 	}
 
