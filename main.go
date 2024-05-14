@@ -15,7 +15,7 @@ import (
 
 var currentFilePath string // 程序的运行目录
 func main() {
-	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 2.3, 服务开启中...")
+	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 2.4.3, 服务开启成功...")
 	// 获取程序的配置
 	currentFilePath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
 	files, _ := os.ReadDir(currentFilePath + "/config")
@@ -90,8 +90,12 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 
 	//  mysqldump --single-transaction --column-statistics=0 --host www.52hhx.com --port 3307 -uroot -proot8114359 --databases vmq > /usr/local/backmysql/blog/vmq_2024-05-12_14:55:41.sql
 	for _, db := range dbs {
-		backShell := fmt.Sprintf("mysqldump --single-transaction --host %s --port %s -u%s -p%s --databases %s > %s%s.sql",
-			host, port, user, pwd, db, savedir, db+"_"+time.Now().UTC().Format("2006-01-02_15:04:05"))
+		// 文件名字
+		// sqlFileName := db + "_" + time.Now().UTC().Format("2006-01-02_15:04:05") + ".sql"
+		// 将上面的赋值改为下面的赋值
+		sqlFileNamePath := fmt.Sprintf("%s%s_%s.sql", savedir, db, time.Now().UTC().Format("2006-01-02_15:04:05"))
+		backShell := fmt.Sprintf("mysqldump --single-transaction --host %s --port %s -u%s -p%s --databases %s > %s",
+			host, port, user, pwd, db, sqlFileNamePath)
 		fmt.Println("备份命令", backShell)
 		retMkdir := exec.Command("bash", "-c", "mkdir -p "+savedir)
 		retMkdirBytes, err := retMkdir.Output()
@@ -100,10 +104,14 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 		}
 
 		retFrp := exec.Command("bash", "-c", backShell)
-		retFrpBytes, err := retFrp.Output()
+		retFrpBytes, err := retFrp.CombinedOutput() // 获取标准输出和错误输出
 
 		if err != nil {
 			fmt.Println("出现错误", string(retFrpBytes), err.Error())
+			fmt.Println("重新执行一次备份")
+			// 先删除旧的文件
+			os.Remove(sqlFileNamePath)
+			invokeBack(user, pwd, host, port, savedir, []string{db}, maxfiles)
 		}
 
 		fmt.Println("数据库 ", db, " 备份完毕")
