@@ -1,6 +1,7 @@
 # 注意
-- 当前只支持linux
+- 当前只编译了linux版本，如需windows版本可以给一个issue
 - 需要安装mysql-client 或者mariadb-client
+- 如果是windows平台记得给mysqldump增加一下环境变量
 
 ubuntu/debian系统
 ```shell

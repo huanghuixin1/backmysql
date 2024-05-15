@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -97,13 +98,21 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 		backShell := fmt.Sprintf("mysqldump --single-transaction --host %s --port %s -u%s -p%s --databases %s > %s",
 			host, port, user, pwd, db, sqlFileNamePath)
 		fmt.Println("备份命令", backShell)
-		retMkdir := exec.Command("bash", "-c", "mkdir -p "+savedir)
+		// 创建目录 区分不同平台
+		var shellOrCmd string
+		if runtime.GOOS == "windows" {
+			shellOrCmd = "cmd.exe"
+		} else {
+			shellOrCmd = "bash"
+		}
+		retMkdir := exec.Command(shellOrCmd, "-c", "mkdir -p "+savedir)
+
 		retMkdirBytes, err := retMkdir.Output()
 		if err != nil {
 			fmt.Println("创建目录 出现错误", string(retMkdirBytes), err.Error())
 		}
 
-		retFrp := exec.Command("bash", "-c", backShell)
+		retFrp := exec.Command(shellOrCmd, "-c", backShell)
 		retFrpBytes, err := retFrp.CombinedOutput() // 获取标准输出和错误输出
 
 		if err != nil {
