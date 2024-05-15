@@ -16,7 +16,7 @@ import (
 
 var currentFilePath string // 程序的运行目录
 func main() {
-	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 2.4.3, 服务开启成功...")
+	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 2.5, 服务开启成功...")
 	// 获取程序的配置
 	currentFilePath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
 	files, _ := os.ReadDir(currentFilePath + "/config")
@@ -121,9 +121,9 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 			// 先删除旧的文件
 			os.Remove(sqlFileNamePath)
 			invokeBack(user, pwd, host, port, savedir, []string{db}, maxfiles)
+		} else {
+			fmt.Println("数据库 ", db, " 备份完毕")
 		}
-
-		fmt.Println("数据库 ", db, " 备份完毕")
 	}
 }
 
