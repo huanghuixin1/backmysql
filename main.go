@@ -19,7 +19,7 @@ import (
 
 var currentFilePath string // 程序的运行目录
 func main() {
-	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 3.0, 服务开启成功...")
+	fmt.Println(time.Now().UTC().Format("2006-01-02_15:04:05"), "当前版本: 3.1, 服务开启成功...")
 	// 获取程序的配置
 	currentFilePath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
 	files, _ := os.ReadDir(currentFilePath + "/config")
@@ -79,8 +79,8 @@ func startBackInterval(config *config.Config, ch chan int) {
 		}
 	} else {
 		for true {
-			time.Sleep(time.Minute * time.Duration(backtime))
 			invokeBack(dbType, user, pwd, host, port, savedir, dbs, maxfiles)
+			time.Sleep(time.Minute * time.Duration(backtime))
 		}
 	}
 	ch <- 1

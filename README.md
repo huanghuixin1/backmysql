@@ -38,3 +38,13 @@ $ nohup /usr/local/backmysql/./backmysql > /var/log/backmysql.log 2>&1 &
 - `CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build main.go`
 ## 注意
 修改完配置记得`重新启动程序`!!
+
+
+## 附上安装指定版本的postgresql-client
+```bash
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+# 比如这里就是安装的13版本
+apt install postgresql-client-13
+```
