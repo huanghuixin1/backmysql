@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -12,6 +13,8 @@ import (
 	"time"
 
 	"github.com/robfig/config"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
 )
 
 var currentFilePath string // 程序的运行目录
@@ -39,12 +42,17 @@ func main() {
 }
 
 func startBackInterval(config *config.Config, ch chan int) {
+	dbType, _ := config.String("", "dbType")
+	if dbType == "" {
+		dbType = "mysql"
+	}
+	fmt.Println("数据库类型", dbType)
 	user, _ := config.String("", "user")
 	pwd, _ := config.String("", "pwd")
 	host, _ := config.String("", "host")
 	port, _ := config.String("", "port")
 	savedir, _ := config.String("", "savedir")
-	savedir = currentFilePath + savedir
+	savedir = filepath.FromSlash(currentFilePath + savedir)
 	dbsStr, _ := config.String("", "dbs")
 	maxfiles, _ := config.Int("", "maxfiles")
 	if maxfiles <= 0 {
@@ -65,20 +73,20 @@ func startBackInterval(config *config.Config, ch chan int) {
 		for true {
 			now := time.Now().UTC()
 			if now.Hour() == housr && now.Minute() == minuts {
-				invokeBack(user, pwd, host, port, savedir, dbs, maxfiles)
+				invokeBack(dbType, user, pwd, host, port, savedir, dbs, maxfiles)
 			}
 			time.Sleep(time.Second * time.Duration(40))
 		}
 	} else {
 		for true {
 			time.Sleep(time.Minute * time.Duration(backtime))
-			invokeBack(user, pwd, host, port, savedir, dbs, maxfiles)
+			invokeBack(dbType, user, pwd, host, port, savedir, dbs, maxfiles)
 		}
 	}
 	ch <- 1
 }
 
-func invokeBack(user string, pwd string, host string, port string, savedir string, dbs []string, maxfiles int) {
+func invokeBack(dbType string, user string, pwd string, host string, port string, savedir string, dbs []string, maxfiles int) {
 	// 判断文件数量是否大于要求值
 	files, _ := os.ReadDir(savedir)
 	for len(files) > maxfiles {
@@ -94,33 +102,59 @@ func invokeBack(user string, pwd string, host string, port string, savedir strin
 		// 文件名字
 		// sqlFileName := db + "_" + time.Now().UTC().Format("2006-01-02_15:04:05") + ".sql"
 		// 将上面的赋值改为下面的赋值
-		sqlFileNamePath := fmt.Sprintf("%s%s_%s.sql", savedir, db, time.Now().UTC().Format("2006-01-02_15:04:05"))
-		backShell := fmt.Sprintf("mysqldump --single-transaction --host %s --port %s -u%s -p%s --databases %s > %s",
-			host, port, user, pwd, db, sqlFileNamePath)
+		sqlFileNamePath := filepath.FromSlash(fmt.Sprintf("%s%s_%s.sql", savedir, db, time.Now().UTC().Format("2006-01-02__15.04.05")))
+		backShell := "" // 备份命令
+
+		// 根据不同的数据库 进行备份命令的初始化
+		switch dbType {
+		case "mysql":
+			backShell = fmt.Sprintf("mysqldump --skip-ssl --single-transaction --host %s --port %s -u%s -p%s --databases %s > %s",
+				host, port, user, pwd, db, sqlFileNamePath)
+		case "pgsql":
+			//backShell = fmt.Sprintf("pg_dump \"host=%s port=%s user=%s dbname=%s password=%s\" > %s",
+			// host, port, user, db, pwd, sqlFileNamePath)
+			os.Setenv("PGPASSWORD", pwd)
+
+			// pg_dump -U [用户名] -h [host] -p [port] [数据库] > ./aurora.sql
+			backShell = fmt.Sprintf("pg_dump --host %s --port %s --username=%s --dbname=%s --file=%s", host, port, user, db, sqlFileNamePath)
+			//backShell = fmt.Sprintf("pg_dump.exe \"host=%s port=%s user=%s dbname=%s password=%s\" > %s", host, port, user, db, pwd, sqlFileNamePath)
+		default:
+			fmt.Println("不支持的数据库类型")
+			return
+		}
+
 		fmt.Println("备份命令", backShell)
 		// 创建目录 区分不同平台
-		var shellOrCmd string
+		var shellOrCmd, shellArg string
 		if runtime.GOOS == "windows" {
 			shellOrCmd = "cmd.exe"
+			shellArg = "/C"
 		} else {
 			shellOrCmd = "bash"
-		}
-		retMkdir := exec.Command(shellOrCmd, "-c", "mkdir -p "+savedir)
-
-		retMkdirBytes, err := retMkdir.Output()
-		if err != nil {
-			fmt.Println("创建目录 出现错误", string(retMkdirBytes), err.Error())
+			shellArg = "-c"
 		}
 
-		retFrp := exec.Command(shellOrCmd, "-c", backShell)
-		retFrpBytes, err := retFrp.CombinedOutput() // 获取标准输出和错误输出
+		// 如果目录不存在则创建
+		_, errExist := os.Stat(savedir)
+		if errExist != nil {
+			err := os.MkdirAll(savedir, os.ModePerm)
+			if err != nil {
+				fmt.Println("创建目录 出现错误", err.Error())
+			}
+		}
+
+		retBackCmd := exec.Command(shellOrCmd, shellArg, backShell)
+		retBackCmd.Env = append(retBackCmd.Env, os.Environ()...) // 复制当前环境变量
+
+		retBackCmdBytes, err := retBackCmd.CombinedOutput() // 获取标准输出和错误输出
 
 		if err != nil {
-			fmt.Println("出现错误", string(retFrpBytes), err.Error())
+			strChinese, _ := translateErrorToChineseInGo(string(retBackCmdBytes))
+			fmt.Printf("错误信息: %s,,,,,,,%s,,,,,, %s\n", retBackCmdBytes, strChinese, err.Error())
 			fmt.Println("重新执行一次备份")
 			// 先删除旧的文件
 			os.Remove(sqlFileNamePath)
-			invokeBack(user, pwd, host, port, savedir, []string{db}, maxfiles)
+			invokeBack(dbType, user, pwd, host, port, savedir, []string{db}, maxfiles)
 		} else {
 			fmt.Println("数据库 ", db, " 备份完毕")
 		}
@@ -146,4 +180,15 @@ func getMinModifyTimeFile(path string) os.FileInfo {
 	}
 
 	return minModifyTimeFile
+}
+
+func translateErrorToChineseInGo(errorMsg string) (string, error) {
+	// 使用 simplifiedchinese.GBK 解码器进行解码
+	decoder := transform.NewReader(strings.NewReader(errorMsg), simplifiedchinese.GBK.NewDecoder())
+	content, err := ioutil.ReadAll(decoder)
+	if err != nil {
+		return "", err
+	}
+
+	return string(content), nil
 }
