@@ -1,3 +1,7 @@
+# 本项目不在维护
+已迁移到 https://github.com/huanghuixin1/BackDatabase
+感谢关注
+
 # 注意
 - 当前只编译了linux版本，如需windows版本可以给一个issue
 - 需要安装mysql-client 或者mariadb-client
